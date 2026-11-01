@@ -1,0 +1,17 @@
+# 公开版按白名单收录；完整研究工作区保留本地。
+# 私有归档忽略规则已备存reports/assets/public_prepare_20261101_01/。
+*
+!*/
+!/.gitignore
+!/README.md
+!/LICENSE
+!/NOTICE
+!/docs/GITHUB_UPLOAD_MANIFEST.tsv
+!/docs/public/*.md
+!/reports/public/*.md
+# 只收录三版独立推理模块/配置/锁文件；无官方run.py、上游模型源码/模型卡、权重或训练gate。
+!/experiments/submissions/archive_sources_20261101_01/*/model/model.py
+!/experiments/submissions/archive_sources_20261101_01/*/model/run.sh
+!/experiments/submissions/archive_sources_20261101_01/*/model/requirements-runtime.lock.txt
+!/experiments/submissions/archive_sources_20261101_01/*/model/audio_spectra/*.py
+!/experiments/submissions/archive_sources_20261101_01/*/model/configs/*.json

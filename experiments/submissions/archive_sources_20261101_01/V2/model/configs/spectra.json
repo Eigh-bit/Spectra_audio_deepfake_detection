@@ -1,0 +1,20 @@
+{
+  "mode": "V2-Candidate",
+  "device": "cuda",
+  "threads": 4,
+  "seed": 42,
+  "recursive": false,
+  "decode_timeout_seconds": 120,
+  "output": {
+    "profile": "competition_real_sigmoid_user_requirement",
+    "confidence_direction": "real_high",
+    "confidence_transform": "sigmoid",
+    "labels": {"real": "real", "fake": "fake"},
+    "fake_threshold": 0.0,
+    "threshold_status": "temporary_smoke_only; not official, optimized or calibrated",
+    "official_verified": false,
+    "evidence": "2026-10-26 E0.1 user instruction: confidence in [0,1], high means Real; sigmoid(-mean fake logit difference)",
+    "requirement_source": "user-provided; not independently verified in official documentation",
+    "confidence_tie_label": "fake"
+  }
+}

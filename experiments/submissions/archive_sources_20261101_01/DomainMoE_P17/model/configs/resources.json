@@ -1,0 +1,64 @@
+[
+  {
+    "path": "spectra0/model.py",
+    "sha256": "496ebd5e0b76200731e1687f541ec61cbb9718d3160e74e8d218708c95a6487a",
+    "bytes": 9106,
+    "repo": "lab260/spectra_0",
+    "revision": "b3fb6d5c9d8ce069996f100cbe10117fd74165f3"
+  },
+  {
+    "path": "spectra0/README.md",
+    "sha256": "e166413dcd9566fac187fd63255ae812a9d104c3fffdc5ff03e71be987c8b346",
+    "bytes": 14609,
+    "repo": "lab260/spectra_0",
+    "revision": "b3fb6d5c9d8ce069996f100cbe10117fd74165f3"
+  },
+  {
+    "path": "spectra0/model.safetensors",
+    "sha256": "d355d9175ead0a95856e6310e1d669d1cb86324dae830e079bbbc208d0707668",
+    "bytes": 1273453560,
+    "repo": "local controlled F1-A training",
+    "revision": "spectra0_v3f1_20261029_01:A_final624",
+    "parent_revision": "b3fb6d5c9d8ce069996f100cbe10117fd74165f3"
+  },
+  {
+    "path": "xlsr/config.json",
+    "sha256": "0bffa0d0e98153e883b828d86491f3c6062cb563dc9d7a9cfd1790da30c286ac",
+    "bytes": 1568,
+    "repo": "facebook/wav2vec2-xls-r-300m",
+    "revision": "1a640f32ac3e39899438a2931f9924c02f080a54"
+  },
+  {
+    "path": "xlsr/preprocessor_config.json",
+    "sha256": "a2254a5b58f72cd4de3632f8eee64f3f098b7c1402128d2f419e7d00ae13e335",
+    "bytes": 212,
+    "repo": "facebook/wav2vec2-xls-r-300m",
+    "revision": "1a640f32ac3e39899438a2931f9924c02f080a54"
+  },
+  {
+    "path": "xlsr/README.md",
+    "sha256": "eefcc8bd0709b1acc42f4b16000148fe445531db0eece77212cc09c20f54a320",
+    "bytes": 3735,
+    "repo": "facebook/wav2vec2-xls-r-300m",
+    "revision": "1a640f32ac3e39899438a2931f9924c02f080a54"
+  },
+  {
+    "path": "xlsr/pytorch_model.bin",
+    "sha256": "d5e490574712ad0a6736923b9ed11d4cd51c78609c36205f704fc4e87b11d2e0",
+    "bytes": 1269737156,
+    "repo": "facebook/wav2vec2-xls-r-300m",
+    "revision": "1a640f32ac3e39899438a2931f9924c02f080a54"
+  },
+  {
+    "path": "domain_moe/v2_head.safetensors",
+    "sha256": "913c4a38ad2e05c4b65245cf4e5a2403790f7e71590dba97022b555d6df8ee1c",
+    "bytes": 11646648,
+    "source": "Original V2 head-only tensors"
+  },
+  {
+    "path": "domain_moe/gate.json",
+    "sha256": "b49fea6ac86e8ffc1c2995ba58452f82e03e5721d82854b5f4a2bb9818829de8",
+    "bytes": 248880,
+    "source": "gate_full grouped calibration; see sprint report"
+  }
+]
