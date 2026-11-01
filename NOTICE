@@ -1,18 +1,19 @@
-AIGC Audio — Spectra-0-based audio deepfake detection practice
+Spectra Audio Deepfake Detection
 
-The project-authored code and public documentation in this source selection
-are offered under the MIT License. Copyright holder uses the project
-contributors' collective name; no individual identity is inferred.
+Copyright (c) 2026 AIGC Audio project contributors.
+Project-authored inference code and documentation are provided under MIT.
+Third-party implementations, models, data and binaries retain their own terms;
+they are not distributed by this repository.
 
-MIT does not replace or extend third-party licenses, nor authorize redistribution
-of upstream model implementations, pretrained or fine-tuned weights, datasets,
-FFmpeg binaries, competition materials, or the full local research archive.
-Those resources are excluded from this public source selection.
+Spectra-0: https://huggingface.co/lab260/spectra_0
+Revision: b3fb6d5c9d8ce069996f100cbe10117fd74165f3
+The preserved model card labels its header Apache-2.0 and its body MIT;
+this discrepancy remains unresolved. Project MIT does not resolve it.
 
-Spectra-0: lab260/spectra_0, revision
-b3fb6d5c9d8ce069996f100cbe10117fd74165f3.
-XLS-R: facebook/wav2vec2-xls-r-300m, revision
-1a640f32ac3e39899438a2931f9924c02f080a54.
-Their respective upstream terms govern separately obtained resources.
-The recorded Spectra-0 Apache-2.0/MIT metadata discrepancy remains unresolved.
-See docs/public/THIRD_PARTY.md and docs/public/RELEASE_SCOPE.md.
+XLS-R: https://huggingface.co/facebook/wav2vec2-xls-r-300m
+Revision: 1a640f32ac3e39899438a2931f9924c02f080a54
+Preserved upstream metadata records Apache-2.0; independently obtained
+resources remain subject to applicable upstream terms.
+
+FFmpeg and Python dependencies are obtained separately under their own terms.
+No official competition materials, model weights or dataset files are included.

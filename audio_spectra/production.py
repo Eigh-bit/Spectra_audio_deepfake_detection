@@ -46,7 +46,7 @@ def top2_score(scores):
 
 
 def load_config(path=None):
-    config = json.loads(Path(path or ROOT / 'configs/spectra.json').read_text(encoding='utf-8'))
+    config = json.loads(Path(path or ROOT / 'configs/v2.json').read_text(encoding='utf-8'))
     if config['mode'] not in ('V1-Base', 'V2-Candidate', 'V3-Top2'):
         raise ValueError('Unknown frozen model mode')
     if config['threads'] < 1:
@@ -54,8 +54,8 @@ def load_config(path=None):
     return config
 
 
-def verify_weights(weights):
-    manifest = json.loads((ROOT / 'configs/resources.json').read_text())
+def verify_weights(weights, manifest_path=None):
+    manifest = json.loads(Path(manifest_path or ROOT / 'configs/resources/v2.json').read_text())
     for entry in manifest:
         path = Path(weights) / entry['path']
         if path.is_symlink() or not path.is_file() or sha256(path) != entry['sha256']:
@@ -117,12 +117,15 @@ def prepare_audio(path, timeout=120):
 
 class SpectraEngine:
     def __init__(self, config, weights=None):
+        start = time.perf_counter()
+        weights = Path(weights or ROOT / 'weights')
+        verify_weights(weights, ROOT / config.get('resource_manifest', 'configs/resources/v2.json'))
+        hash_seconds = time.perf_counter() - start
         import numpy as np
         import torch
         from .inference import load_model
         self.torch = torch
         self.config = config
-        start = time.perf_counter()
         np.random.seed(config['seed'])
         torch.manual_seed(config['seed'])
         torch.set_num_threads(config['threads'])
@@ -134,15 +137,58 @@ class SpectraEngine:
         self.cuda = self.device.startswith('cuda')
         if self.cuda:
             torch.cuda.reset_peak_memory_stats(self.device)
-        weights = Path(weights or ROOT / 'weights')
-        verify_weights(weights)
-        hash_seconds = time.perf_counter() - start
         self.model, self.loading = load_model(weights, device=self.device)
         self.loading.update(resource_verification_seconds=hash_seconds,
                             initialization_seconds=time.perf_counter() - start)
+        self.domain_gate = None
+        fusion = config.get('score_fusion', 'off')
+        if fusion not in ('off', 'domain_moe'):
+            raise ValueError('Unknown frozen score fusion')
+        if fusion == 'domain_moe':
+            import copy
+            from safetensors.torch import load_file
+            from .domain_moe import DomainGate
+            gate_path = weights / 'domain_moe/gate.json'
+            head_path = weights / 'domain_moe/v2_head.safetensors'
+            self.domain_gate = DomainGate(json.loads(gate_path.read_text()))
+            self.v2_bridge = copy.deepcopy(self.model.bridge).eval().requires_grad_(False)
+            self.v2_ecapa = copy.deepcopy(self.model.ecapa_tdnn).eval().requires_grad_(False)
+            head = load_file(str(head_path), device='cpu')
+            expected = {'bridge.' + k for k in self.v2_bridge.state_dict()} | {'ecapa_tdnn.' + k for k in self.v2_ecapa.state_dict()}
+            if set(head) != expected:
+                raise ValueError('Incomplete auxiliary V2 head')
+            self.v2_bridge.load_state_dict({k[7:]: v for k, v in head.items() if k.startswith('bridge.')}, strict=True)
+            self.v2_ecapa.load_state_dict({k[11:]: v for k, v in head.items() if k.startswith('ecapa_tdnn.')}, strict=True)
+            self.loading.update(auxiliary_head_state_tensors=len(head), auxiliary_head_sha256=sha256(head_path),
+                                domain_gate_sha256=sha256(gate_path), encoder_loads=1,
+                                initialization_seconds=time.perf_counter() - start)
+            del head
         self.load_count = 1
 
     def score_file(self, path, mode=None):
+        begin = time.perf_counter()
+        policy = self.config.get('duration_policy', 'off')
+        if policy == 'off':
+            result = self._score_file_native(path, mode)
+        elif policy == 'short_tta64':
+            from .duration_policy import score_short_tta
+            result = score_short_tta(self, path, mode, decoder_binary())
+        else:
+            raise ValueError('Unknown duration policy')
+        if self.domain_gate is not None:
+            if (mode or self.config['mode']) != 'V3-Top2':
+                raise ValueError('DomainMoE requires the frozen Top2 base')
+            embedding = result.pop('_domain_embedding')
+            short_score = result['fake_score']
+            mixture = self.domain_gate.score(embedding, short_score, result['v2_mean_fake_score'])
+            result.update(short_tta_fake_score=short_score, base_file_aggregation=result['file_aggregation'],
+                          fake_score=mixture['score'], file_aggregation='domain_moe',
+                          domain_probabilities=mixture['domain_probabilities'],
+                          calibrated_expert_logits=mixture['expert_logits'], p_v2=mixture['p_v2'],
+                          file_seconds=time.perf_counter() - begin)
+        return result
+
+    def _score_file_native(self, path, mode=None):
         import numpy as np
         from .multiwindow import window_tensors
         mode = mode or self.config['mode']
@@ -155,6 +201,7 @@ class SpectraEngine:
             sequence = sequence[:1]
         decode_seconds = time.perf_counter() - start
         windows = []
+        first_embedding = None
         for offset, tensor in sequence:
             first_hash = hashlib.sha256(tensor.numpy().tobytes()).hexdigest() if offset == 0 else None
             tensor = tensor.to(self.device)
@@ -162,7 +209,14 @@ class SpectraEngine:
                 self.torch.cuda.synchronize(self.device)
             begin = time.perf_counter()
             with self.torch.inference_mode():
-                logits = self.model(tensor)
+                if self.domain_gate is None:
+                    logits = self.model(tensor)
+                else:
+                    feature = self.model.ssl_encoder(tensor)
+                    logits = self.model.ecapa_tdnn(self.model.bridge(feature))
+                    auxiliary = self.v2_ecapa(self.v2_bridge(feature))[0].cpu().tolist()
+                    if offset == 0:
+                        first_embedding = feature[0].cpu().numpy().astype(np.float64).mean(0).tolist()
             if self.cuda:
                 self.torch.cuda.synchronize(self.device)
             seconds = time.perf_counter() - begin
@@ -172,15 +226,20 @@ class SpectraEngine:
             windows.append({'offset': offset, 'spoof_logit': spoof, 'bonafide_logit': bona,
                             'fake_score': spoof - bona, 'forward_seconds': seconds,
                             'preprocessed_sha256': first_hash})
+            if self.domain_gate is not None:
+                windows[-1].update(v2_spoof_logit=auxiliary[0], v2_bonafide_logit=auxiliary[1], v2_fake_score=auxiliary[0] - auxiliary[1])
         # Match D1's float64 arithmetic mean, including its order of operations.
         mean_score = float(np.mean([window['fake_score'] for window in windows]))
         score = top2_score([window['fake_score'] for window in windows]) if mode == 'V3-Top2' else mean_score
         if not math.isfinite(score):
             raise ValueError('Non-finite aggregate score')
-        return {'filename': Path(path).name, 'mode': mode, 'fake_score': score,
+        result = {'filename': Path(path).name, 'mode': mode, 'fake_score': score,
                 'mean_fake_score': mean_score, 'file_aggregation': 'top2' if mode == 'V3-Top2' else 'mean',
                 'windows': windows, **metadata, 'decode_preprocess_seconds': decode_seconds,
                 'file_seconds': time.perf_counter() - start}
+        if self.domain_gate is not None:
+            result.update(_domain_embedding=first_embedding, v2_mean_fake_score=float(np.mean([w['v2_fake_score'] for w in windows])))
+        return result
 
     def resources(self):
         return {'model_load_count': self.load_count,

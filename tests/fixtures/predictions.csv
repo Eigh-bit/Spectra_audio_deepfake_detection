@@ -1,0 +1,4 @@
+filename,label,confidence
+a.wav,real,0.88079707797788243
+m.wav,fake,0.5
+z.wav,fake,0.11920292202211755

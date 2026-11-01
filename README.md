@@ -1,32 +1,85 @@
-# AIGC Audio · 基于Spectra-0的音频伪造检测实践
+# Spectra Audio Deepfake Detection
 
-面向音频深度伪造检测的推理工程与研究复现资料，关注多窗口聚合、跨编码鲁棒性和离线推理。模型能力建立在Spectra-0与XLS-R之上，本项目的工作集中在推理适配、聚合策略、受控实验及部署复核；不宣称从零训练基础模型或取得官方最优成绩。
+基于Spectra-0与XLS-R的音频伪造检测实践，提供文件级推理、多窗口聚合和编码鲁棒性研究的推理配置。基础模型来自上游；本项目不宣称从零训练基础模型或取得官方最优成绩。
 
-## 可以阅读和使用什么
+## 目录
 
-- 三版推理模块、配置与固定依赖清单：V2、Top2、DomainMoE。
-- [方法与研究结论](reports/public/RESEARCH_OVERVIEW.md)：公开语料上的历史观察、失败路线和局限。
-- [快速示例](docs/public/QUICKSTART.md)：只用Python标准库生成无语音测试信号，并说明具备模型资源后的本地推理方法。
-- [版本和资源要求](docs/public/MODELS.md)、[公开范围](docs/public/RELEASE_SCOPE.md)、[第三方来源](docs/public/THIRD_PARTY.md)。
+```text
+predict.py          # 本地推理入口
+audio_spectra/      # 共用的解码、模型适配、聚合与输出模块
+configs/            # V2 / Top2 / DomainMoE配置及资源散列
+tests/              # 无需GPU的接口与失败处理回归测试
+requirements.txt    # 历史运行环境的固定依赖
+```
 
-## 源码版本
+三种方案共用一套实现，通过配置选择，不需要复制三份工程。
 
-| 版本 | 入口 | 说明 |
+## 环境与资源
+
+历史运行环境为Python 3.10、Linux、PyTorch/torchaudio 2.7.1+cu126；其他环境需自行适配。
+
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu126
+```
+
+如需MP3解码或DomainMoE的编码视图，还需可用的FFmpeg。安装在运行前完成；推理不联网下载模型。
+
+**仓库不包含权重和上游模型实现，克隆后不能直接进行真实推理。** 对应资源须按`configs/resources/*.json`中的路径和SHA准备，文件位于传给`--weights`的目录下：
+
+| 配置 | 方法 | 所需模型资源 |
 |---|---|---|
-| V2 | [推理源码](experiments/submissions/archive_sources_20261101_01/V2/model/) | 首/中/尾窗口去重后按logit差分均值聚合；建议从此理解流程 |
-| Top2 | [推理源码](experiments/submissions/archive_sources_20261101_01/Top2/model/) | 固定Top2文件级聚合；没有重新训练基础模型 |
-| DomainMoE | [推理源码](experiments/submissions/archive_sources_20261101_01/DomainMoE_P17/model/) | 声学域门控混合；学习得到的gate、研究权重不随源码分发 |
+| `configs/v2.json` | 首/中/尾窗口去重，logit差分均值 | 原Spectra checkpoint与XLS-R |
+| `configs/top2.json` | 固定Top2窗口聚合 | 本地F1-A checkpoint与XLS-R |
+| `configs/domain_moe.json` | 声学域门控混合与短音频编码视图 | F1-A、XLS-R、V2 head及学习得到的gate |
 
-源码快照保持冻结版本字节。**克隆后不能直接完成真实模型推理**：本仓库不提供权重、上游模型实现、FFmpeg二进制或数据集；部分研究权重没有公开下载入口。请先查[资源要求](docs/public/MODELS.md)，不要用随机初始化或占位分数代替缺失模型。
+上游来源：[Spectra-0](https://huggingface.co/lab260/spectra_0)、[XLS-R](https://huggingface.co/facebook/wav2vec2-xls-r-300m)。固定revision及文件散列记录在资源清单中。Spectra实现应放在`<weights>/spectra0/model.py`，其余资源按清单放置。
 
-输出CSV为`filename,label,confidence`；本项目适配器中confidence越大越真，不等同于所有评测工具的分数约定。合成测试信号仅用于文件/解码检查，没有Real/Fake真值，不能据此计算检测准确率或EER。
+F1-A、V2 head和gate没有本仓库的公开下载入口，不能用上游基础权重替代。当前源码可用于阅读和工程复用，尚不具备从公开资源一键复现所有研究模型的条件。
 
-## 研究边界
+## 推理
 
-公开语料抽样、跨域和编码实验不能替代独立完整基准。本项目没有可公开核验的官方EER或比赛成绩；不同候选存在误报和局部伪造检测退化，详细限制见研究说明。此公开选择不包含比赛原始样本、目标逐条预测、伪标签、平台操作档案或完整内部实验历史。
+输入为音频目录，输出CSV必须是新文件，且父目录已存在：
 
-## 许可与来源
+```bash
+mkdir -p output
+python predict.py /path/to/audio output/result.csv \
+  --config configs/v2.json --weights /path/to/v2_weights
+```
 
-项目原创部分采用[MIT License](LICENSE)，适用边界见[NOTICE](NOTICE)。第三方模型、数据及工具按其各自条件处理；MIT不重新授权这些资源。上游许可标注仍有待确认事项，见[第三方说明](docs/public/THIRD_PARTY.md)。
+切换Top2或DomainMoE时，同时选择对应配置和资源目录。`--device cpu`可覆盖设备配置，但未作为性能承诺。入口使用普通终端进度，不依赖比赛平台的`rts`。
 
-[逐文件源码清单](docs/GITHUB_UPLOAD_MANIFEST.tsv)记录公开候选集的路径、字节数和SHA。公开范围以该清单及白名单为准；完整私有工作区和大资源仍另行保留，不随此源码选择公开。
+CSV列为`filename,label,confidence`；confidence为有限[0,1]数值，越大越真。大于0.5判real，其余判fake；这只是当前输出合同，不代表经过概率校准或对所有语料通用的最优阈值。
+
+缺少资源、散列不符或处理失败应报错，不用占位分数补齐。中间进度记录在`result.csv.state/`；全部输入成功后才发布最终CSV，已有结果不覆盖。
+
+## 无需模型的检查
+
+```bash
+python predict.py --help
+python -m unittest discover -s tests -v
+```
+
+测试覆盖配置与权重身份、资源篡改、文件覆盖/分数方向，以及失败时不发布部分CSV。测试使用显式桩评分，不冒充模型推理或检测准确率。
+
+可用以下命令生成2秒单声道测试音，作为资源齐备后的解码输入；它没有Real/Fake真值，不能用于EER：
+
+```bash
+python - <<'PY'
+import math, struct, tempfile, wave
+from pathlib import Path
+folder = Path(tempfile.mkdtemp(prefix='spectra-demo-'))
+path = folder / 'tone.wav'
+with wave.open(str(path), 'wb') as wav:
+    wav.setparams((1, 2, 16000, 32000, 'NONE', 'not compressed'))
+    wav.writeframes(struct.pack('<32000h', *(int(3000*math.sin(2*math.pi*440*i/16000)) for i in range(32000))))
+print(folder)
+PY
+```
+
+## 研究范围与许可
+
+本项目研究了首窗漏检、多窗口聚合、跨编码鲁棒性与模型错误互补。开发集改善不保证跨域保持，部分候选会增加真实语音误报或降低局部伪造检出。没有可公开核验的官方EER或比赛成绩；本次结构整理只验证接口、资源选择及评分逻辑保持，未重新执行真实GPU模型推理。
+
+原创部分采用[MIT](LICENSE)，第三方来源与适用边界见[NOTICE](NOTICE)。上游Spectra模型卡的Apache-2.0/MIT标注存在未解决的不一致；本仓库不分发上游模型实现、权重、数据、FFmpeg二进制或比赛原始资料，也不以项目MIT重新授权这些资源。

@@ -19,5 +19,6 @@
     "evidence": "2026-10-26 E0.1 user instruction: confidence in [0,1], high means Real; sigmoid(-mean fake logit difference); frozen Top2 file aggregation",
     "requirement_source": "user-provided; not independently verified in official documentation",
     "confidence_tie_label": "fake"
-  }
+  },
+  "resource_manifest": "configs/resources/top2.json"
 }
