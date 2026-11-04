@@ -4,7 +4,7 @@
 
 用 V2 在 CPU 上处理三条公开 FSDD 人声。[图文结果](real_audio/RESULTS.md) · [实测 CSV](real_audio/result.csv) · [音频署名与许可](real_audio/ATTRIBUTION.md)
 
-按[安装指南](../docs/setup.md)准备环境和 V2 权重后，从仓库根目录运行：
+按[安装指南](setup.md)准备环境和 V2 权重后，从仓库根目录运行：
 
 ```bash
 python examples/real_audio/fetch_inputs.py

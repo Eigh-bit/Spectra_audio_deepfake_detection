@@ -2,7 +2,7 @@
 
 用 Spectra-0 和 XLS-R 对本地音频批量评分，输出逐文件 CSV。V2 合并首、中、尾窗口的得分，模型资源准备好后可离线运行。
 
-[安装与权重](docs/setup.md) · [复跑真实音频](examples/) · [查看实测 CSV](examples/real_audio/result.csv)
+[安装与权重](examples/setup.md) · [复跑真实音频](examples/) · [查看实测 CSV](examples/real_audio/result.csv)
 
 ## 真实音频实跑（2026-11-04）
 
@@ -12,7 +12,7 @@ V2 在 CPU 上处理了 3 条公开 FSDD 人声。进程总耗时 16.29 秒，�
 
 ![原始人声波形与模型分数](examples/real_audio/assets/public_audio_demo_20261104_01/overview.png)
 
-按[安装指南](docs/setup.md)准备环境和 V2 权重后，在仓库根目录运行：
+按[安装指南](examples/setup.md)准备环境和 V2 权重后，在仓库根目录运行：
 
 ```bash
 python examples/real_audio/fetch_inputs.py
@@ -33,6 +33,6 @@ python examples/real_audio/verify_results.py output/public-demo/result.csv
 
 ## 开发与许可
 
-[predict.py](predict.py) 是命令行入口，[audio_spectra/](audio_spectra/) 实现解码、评分和输出。[无权重测试](docs/setup.md#本地检查)覆盖资源校验、CSV 输出和失败处理。
+[predict.py](predict.py) 是命令行入口，[audio_spectra/](audio_spectra/) 实现解码、评分和输出。[无权重测试](examples/setup.md#本地检查)覆盖资源校验、CSV 输出和失败处理。
 
 原创部分采用[MIT](LICENSE)，第三方来源与适用边界见[NOTICE](NOTICE)。上游Spectra模型卡的Apache-2.0/MIT标注存在未解决的不一致；本仓库不分发上游模型实现、权重、FFmpeg二进制或比赛原始资料；仅随真实推理示例分发明确署名的三条FSDD公开录音，也不以项目MIT重新授权这些资源。
