@@ -1,69 +1,16 @@
 # Spectra Audio Deepfake Detection
 
-基于Spectra-0与XLS-R的音频伪造检测实践，提供文件级推理、多窗口聚合和编码鲁棒性研究的推理配置。基础模型来自上游。
-
-## 目录
-
-```text
-predict.py          # 本地推理入口
-audio_spectra/      # 共用的解码、模型适配、聚合与输出模块
-configs/            # V2 / Top2 / DomainMoE配置及资源散列
-tests/              # 无需GPU的接口与失败处理回归测试
-examples/real_audio/ # 真实人声、来源/许可、实测CSV与图文结果
-requirements.txt    # 历史运行环境的固定依赖
-```
-
-三种方案共用一套实现，通过配置选择，不需要复制三份工程。
-
-## 环境与资源
-
-历史运行环境为Python 3.10、Linux、PyTorch/torchaudio 2.7.1+cu126；其他环境需自行适配。
-
-```bash
-python3.10 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu126
-```
-
-如需MP3解码或DomainMoE的编码视图，还需可用的FFmpeg。安装在运行前完成；推理不联网下载模型。
-
-**仓库不包含权重和上游模型实现，克隆后不能直接进行真实推理。** 对应资源须按`configs/resources/*.json`中的路径和SHA准备，文件位于传给`--weights`的目录下：
-
-| 配置 | 方法 | 所需模型资源 |
-|---|---|---|
-| `configs/v2.json` | 首/中/尾窗口去重，logit差分均值 | 原Spectra checkpoint与XLS-R |
-| `configs/top2.json` | 固定Top2窗口聚合 | 本地F1-A checkpoint与XLS-R |
-| `configs/domain_moe.json` | 声学域门控混合与短音频编码视图 | F1-A、XLS-R、V2 head及学习得到的gate |
-
-上游来源：[Spectra-0](https://huggingface.co/lab260/spectra_0)、[XLS-R](https://huggingface.co/facebook/wav2vec2-xls-r-300m)。固定revision及文件散列记录在资源清单中。Spectra实现应放在`<weights>/spectra0/model.py`，其余资源按清单放置。
-
-F1-A、V2 head和gate没有本仓库的公开下载入口，不能用上游基础权重替代。当前源码可用于阅读和工程复用，尚不具备从公开资源一键复现所有研究模型的条件。
-
-## 推理
-
-输入为音频目录，输出CSV必须是新文件，且父目录已存在：
-
-```bash
-mkdir -p output
-python predict.py /path/to/audio output/result.csv \
-  --config configs/v2.json --weights /path/to/v2_weights
-```
-
-切换Top2或DomainMoE时，同时选择对应配置和资源目录。`--device cpu`可覆盖设备配置，但未作为性能承诺。入口使用普通终端进度，不依赖比赛平台的`rts`。
-
-CSV列为`filename,label,confidence`；confidence为有限[0,1]数值，越大越真。大于0.5判real，其余判fake；这只是当前输出合同，不代表经过概率校准或对所有语料通用的最优阈值。
-
-缺少资源、散列不符或处理失败应报错，不用占位分数补齐。中间进度记录在`result.csv.state/`；全部输入成功后才发布最终CSV，已有结果不覆盖。
+用 Spectra-0 和 XLS-R 对本地音频批量评分，输出逐文件 CSV。V2 合并首、中、尾窗口的得分，模型资源准备好后可离线运行。
 
 ## 真实音频实跑（2026-11-04）
 
-已按上述 V2 入口完成三条公开 FSDD 人声的真实 CPU 推理：3/3 覆盖，进程总耗时16.29秒，峰值RSS约3.69GiB。两条判real，一条真实人声判fake；保留误报，不据此计算EER或宣称整体准确率。
+V2 在 CPU 上处理了 3 条公开 FSDD 人声。进程总耗时 16.29 秒，峰值内存约 3.69 GiB。模型将两条判为真实，一条误判为伪造。这组样本全是真实人声，仅用于演示推理流程。
 
 [图文结果与复跑命令](examples/real_audio/RESULTS.md) · [输入与SHA256](examples/real_audio/inputs.json) · [真实CSV](examples/real_audio/result.csv) · [音频署名与许可](examples/real_audio/ATTRIBUTION.md)
 
 ![原始人声波形与模型分数](examples/real_audio/assets/public_audio_demo_20261104_01/overview.png)
 
-已准备环境及V2权重后，在仓库根目录执行：
+按[安装指南](docs/setup.md)准备环境和 V2 权重后，在仓库根目录运行：
 
 ```bash
 python examples/real_audio/fetch_inputs.py
@@ -75,32 +22,15 @@ python examples/real_audio/verify_results.py output/public-demo/result.csv
 
 输出文件与同名 `.state/` 必须不存在。示例 WAV 原字节采用CC BY-SA 4.0；项目MIT不重新授权音频。完整环境、预处理、分数语义和运行边界见图文报告。
 
-## 无需模型的检查
+## 配置与输出
 
-```bash
-python predict.py --help
-python -m unittest discover -s tests -v
-```
+- [V2](configs/v2.json) 使用[公开模型资源](configs/resources/v2.json)，适合复跑上面的示例。
+- [Top2](configs/top2.json) 取伪造分数最高的两个窗口的均值。[DomainMoE](configs/domain_moe.json) 按声学域混合评分。两者依赖未公开的研究权重。
 
-测试覆盖配置与权重身份、资源篡改、文件覆盖/分数方向，以及失败时不发布部分CSV。测试使用显式桩评分，不冒充模型推理或检测准确率。
+用自己的音频目录替换命令中的 `examples/real_audio/input` 即可批量处理。CSV 包含 `filename,label,confidence`。分数越高越偏向真实，高于 0.5 输出 `real`，其余输出 `fake`。分数未经概率校准。CLI 在所有输入处理成功后发布 CSV。
 
-可用以下命令生成2秒单声道测试音，作为资源齐备后的解码输入；它没有Real/Fake真值，不能用于EER：
+## 开发与许可
 
-```bash
-python - <<'PY'
-import math, struct, tempfile, wave
-from pathlib import Path
-folder = Path(tempfile.mkdtemp(prefix='spectra-demo-'))
-path = folder / 'tone.wav'
-with wave.open(str(path), 'wb') as wav:
-    wav.setparams((1, 2, 16000, 32000, 'NONE', 'not compressed'))
-    wav.writeframes(struct.pack('<32000h', *(int(3000*math.sin(2*math.pi*440*i/16000)) for i in range(32000))))
-print(folder)
-PY
-```
-
-## 研究范围与许可
-
-本项目研究了首窗漏检、多窗口聚合、跨编码鲁棒性与模型错误互补。开发集改善不保证跨域保持，部分候选会增加真实语音误报或降低局部伪造检出。没有可公开核验的官方EER或比赛成绩；此前结构整理仅验证接口与逻辑；2026-11-04新增的真实CPU推理见上方示例，未进行GPU或比赛平台验收。
+[predict.py](predict.py) 是命令行入口，[audio_spectra/](audio_spectra/) 实现解码、评分和输出。[无权重测试](docs/setup.md#本地检查)覆盖资源校验、CSV 输出和失败处理。
 
 原创部分采用[MIT](LICENSE)，第三方来源与适用边界见[NOTICE](NOTICE)。上游Spectra模型卡的Apache-2.0/MIT标注存在未解决的不一致；本仓库不分发上游模型实现、权重、FFmpeg二进制或比赛原始资料；仅随真实推理示例分发明确署名的三条FSDD公开录音，也不以项目MIT重新授权这些资源。
