@@ -22,7 +22,17 @@ python -m pip install -r requirements.txt --extra-index-url https://download.pyt
 
 F1-A、V2 head和gate没有本仓库的公开下载入口，不能用上游基础权重替代。当前源码可用于阅读和工程复用，尚不具备从公开资源一键复现所有研究模型的条件。
 
+## 准备 V2 资源
+
+[V2 清单](../configs/resources/v2.json)列出每个文件的来源仓库、固定版本、目标路径和 SHA-256。打开对应 Hugging Face 仓库的固定版本，按目标路径的文件名下载。将文件放到权重目录下的 `spectra0/` 和 `xlsr/` 子目录。两个权重文件合计约 2.54 GB。将权重目录传给 `--weights`，CLI 会在加载模型前校验文件。
+
 ## 本地检查
+
+可在独立 Python 环境中运行。测试只需 NumPy，可用以下命令安装。
+
+~~~bash
+python -m pip install numpy==1.26.4
+~~~
 
 ```bash
 python predict.py --help

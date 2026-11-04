@@ -6,7 +6,6 @@ import json
 import math
 import os
 from pathlib import Path
-import resource
 import shutil
 import subprocess
 import sys
@@ -15,6 +14,11 @@ import traceback
 
 os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
 os.environ['HF_HUB_OFFLINE'] = os.environ['TRANSFORMERS_OFFLINE'] = '1'
+try:
+    import resource
+except ImportError:
+    resource = None
+
 from .output_adapter import OutputAdapter
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -243,7 +247,11 @@ class SpectraEngine:
 
     def resources(self):
         return {'model_load_count': self.load_count,
-                'peak_cpu_rss_bytes': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+                'peak_cpu_rss_bytes': (
+                    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                    * (1 if sys.platform == 'darwin' else 1024)
+                    if resource is not None else None
+                ),
                 'peak_gpu_allocated_bytes': self.torch.cuda.max_memory_allocated(self.device) if self.cuda else None,
                 'peak_gpu_reserved_bytes': self.torch.cuda.max_memory_reserved(self.device) if self.cuda else None}
 

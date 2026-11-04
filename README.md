@@ -1,10 +1,10 @@
 # Spectra Audio Deepfake Detection
 
-基于 Spectra-0 和 XLS-R 的音频伪造检测研究代码。命令行工具读取本地音频目录，为每个文件输出一个真假标签和分数。
+用 Spectra-0 和 XLS-R 对本地音频批量评分，输出逐文件 CSV。公开入口是 V2，它合并首、中、尾窗口的得分。
 
 ## 快速开始
 
-先查看命令参数。此步骤只需要 Python。
+想先验证接口和 CSV 输出，可运行[无权重测试](docs/setup.md#本地检查)。查看命令参数只需要 Python。
 
 ```bash
 python predict.py --help
@@ -27,7 +27,7 @@ CSV 列为 `filename,label,confidence`。分数介于 0 和 1，越高越偏向�
 | 配置 | 用途 | 资源清单 |
 | --- | --- | --- |
 | [V2](configs/v2.json) | 对首、中、尾窗口聚合评分 | [V2](configs/resources/v2.json) |
-| [Top2](configs/top2.json) | 聚合得分最高的两个窗口 | [Top2](configs/resources/top2.json) |
+| [Top2](configs/top2.json) | 取伪造分数最高的两个窗口的均值 | [Top2](configs/resources/top2.json) |
 | [DomainMoE](configs/domain_moe.json) | 按声学域混合评分，并对短音频使用编码视图 | [DomainMoE](configs/resources/domain_moe.json) |
 
 仓库未附带模型实现或权重。V2 使用上游资源。Top2 和 DomainMoE 还需要未公开发布的研究权重。
