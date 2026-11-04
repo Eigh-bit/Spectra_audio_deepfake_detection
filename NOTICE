@@ -3,7 +3,8 @@ Spectra Audio Deepfake Detection
 Copyright (c) 2026 AIGC Audio project contributors.
 Project-authored inference code and documentation are provided under MIT.
 Third-party implementations, models, data and binaries retain their own terms;
-they are not distributed by this repository.
+except for the explicitly attributed FSDD demo recordings below,
+they are obtained separately.
 
 Spectra-0: https://huggingface.co/lab260/spectra_0
 Revision: b3fb6d5c9d8ce069996f100cbe10117fd74165f3
@@ -16,4 +17,13 @@ Preserved upstream metadata records Apache-2.0; independently obtained
 resources remain subject to applicable upstream terms.
 
 FFmpeg and Python dependencies are obtained separately under their own terms.
-No official competition materials, model weights or dataset files are included.
+No official competition materials or model weights are included.
+
+FSDD demo recordings: examples/real_audio/input/ contains three unchanged WAVs
+from Free Spoken Digit Dataset, by Zohar Jackson and FSDD contributors.
+Revision: 26eb9aaf76e81b692f806f9140c2d2777410d7a1
+Source: https://github.com/Jakobovski/free-spoken-digit-dataset
+License: https://creativecommons.org/licenses/by-sa/4.0/ (CC BY-SA 4.0).
+The recordings and derived waveform figures retain CC BY-SA 4.0 terms.
+See examples/real_audio/ATTRIBUTION.md and inputs.json for per-file provenance.
+Project MIT does not relicense these recordings or waveform derivatives.

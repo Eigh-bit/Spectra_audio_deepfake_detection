@@ -1,0 +1,4 @@
+filename,label,confidence
+0_jackson_0.wav,real,0.99668758767326893
+1_nicolas_0.wav,real,0.97693063910664801
+2_theo_0.wav,fake,0.0019589648987935354

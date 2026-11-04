@@ -1,0 +1,92 @@
+{
+  "status": "Completed",
+  "expected": 3,
+  "completed": 3,
+  "config": {
+    "mode": "V2-Candidate",
+    "device": "cpu",
+    "threads": 4,
+    "seed": 42,
+    "recursive": false,
+    "decode_timeout_seconds": 120,
+    "output": {
+      "profile": "competition_real_sigmoid_user_requirement",
+      "confidence_direction": "real_high",
+      "confidence_transform": "sigmoid",
+      "labels": {
+        "real": "real",
+        "fake": "fake"
+      },
+      "fake_threshold": 0.0,
+      "threshold_status": "temporary_smoke_only; not official, optimized or calibrated",
+      "official_verified": false,
+      "evidence": "2026-10-26 E0.1 user instruction: confidence in [0,1], high means Real; sigmoid(-mean fake logit difference)",
+      "requirement_source": "user-provided; not independently verified in official documentation",
+      "confidence_tie_label": "fake"
+    },
+    "resource_manifest": "configs/resources/v2.json"
+  },
+  "output_scope": "local/unverified official mapping",
+  "input_directory": "examples/real_audio/input",
+  "output_csv": "output/public-demo/result.csv",
+  "csv": {
+    "rows": 3,
+    "unique_filenames": 3,
+    "sha256": "2f506a0fd5fb79b6677aab844899fa088c9e5879ae359a5dfa39a0bdfce3815b"
+  },
+  "loading": {
+    "load_seconds": 1.5515013542026281,
+    "checkpoint_tensor_count": 718,
+    "spectra_missing_keys": [],
+    "spectra_unexpected_keys": [],
+    "xlsr_loading_info": [
+      {
+        "missing_keys": [],
+        "unexpected_keys": [
+          "project_hid.bias",
+          "project_hid.weight",
+          "project_q.bias",
+          "project_q.weight",
+          "quantizer.codevectors",
+          "quantizer.weight_proj.bias",
+          "quantizer.weight_proj.weight"
+        ],
+        "mismatched_keys": [],
+        "error_msgs": []
+      }
+    ],
+    "resource_verification_seconds": 2.1134180277585983,
+    "initialization_seconds": 13.45598497055471
+  },
+  "directory_seconds": 1.7778447717428207,
+  "files_per_second": 1.687436410468559,
+  "total_seconds": 1.8026633579283953,
+  "resources": {
+    "model_load_count": 1,
+    "peak_cpu_rss_bytes": 3965181952,
+    "peak_gpu_allocated_bytes": null,
+    "peak_gpu_reserved_bytes": null
+  },
+  "process": {
+    "command": [
+      ".venv/bin/python",
+      "predict.py",
+      "examples/real_audio/input",
+      "output/public-demo/result.csv",
+      "--config",
+      "configs/v2.json",
+      "--weights",
+      "../../model/weights",
+      "--device",
+      "cpu"
+    ],
+    "started_at_utc": "2026-11-04T01:29:52.129319+00:00",
+    "cwd_role": "public repository root",
+    "timeout_seconds": 600,
+    "exit_code": 0,
+    "process_wall_seconds": 16.286231465637684,
+    "ended_at_utc": "2026-11-04T01:30:08.417413+00:00"
+  },
+  "source_commit": "5d97d796788e735124c1aeb6fa98eab59dcf5799",
+  "timing_note": "process_wall_seconds includes process startup, imports, resource hashing, loading, inference and CSV; total_seconds is run_directory only and excludes engine construction"
+}

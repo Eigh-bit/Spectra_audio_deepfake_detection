@@ -9,6 +9,7 @@ predict.py          # 本地推理入口
 audio_spectra/      # 共用的解码、模型适配、聚合与输出模块
 configs/            # V2 / Top2 / DomainMoE配置及资源散列
 tests/              # 无需GPU的接口与失败处理回归测试
+examples/real_audio/ # 真实人声、来源/许可、实测CSV与图文结果
 requirements.txt    # 历史运行环境的固定依赖
 ```
 
@@ -54,6 +55,26 @@ CSV列为`filename,label,confidence`；confidence为有限[0,1]数值，越大�
 
 缺少资源、散列不符或处理失败应报错，不用占位分数补齐。中间进度记录在`result.csv.state/`；全部输入成功后才发布最终CSV，已有结果不覆盖。
 
+## 真实音频实跑（2026-11-04）
+
+已按上述 V2 入口完成三条公开 FSDD 人声的真实 CPU 推理：3/3 覆盖，进程总耗时16.29秒，峰值RSS约3.69GiB。两条判real，一条真实人声判fake；保留误报，不据此计算EER或宣称整体准确率。
+
+[图文结果与复跑命令](examples/real_audio/RESULTS.md) · [输入与SHA256](examples/real_audio/inputs.json) · [真实CSV](examples/real_audio/result.csv) · [音频署名与许可](examples/real_audio/ATTRIBUTION.md)
+
+![原始人声波形与模型分数](examples/real_audio/assets/public_audio_demo_20261104_01/overview.png)
+
+已准备环境及V2权重后，在仓库根目录执行：
+
+```bash
+python examples/real_audio/fetch_inputs.py
+mkdir -p output/public-demo
+python predict.py examples/real_audio/input output/public-demo/result.csv \
+  --config configs/v2.json --weights /path/to/v2_weights --device cpu
+python examples/real_audio/verify_results.py output/public-demo/result.csv
+```
+
+输出文件与同名 `.state/` 必须不存在。示例 WAV 原字节采用CC BY-SA 4.0；项目MIT不重新授权音频。完整环境、预处理、分数语义和运行边界见图文报告。
+
 ## 无需模型的检查
 
 ```bash
@@ -80,6 +101,6 @@ PY
 
 ## 研究范围与许可
 
-本项目研究了首窗漏检、多窗口聚合、跨编码鲁棒性与模型错误互补。开发集改善不保证跨域保持，部分候选会增加真实语音误报或降低局部伪造检出。没有可公开核验的官方EER或比赛成绩；本次结构整理只验证接口、资源选择及评分逻辑保持，未重新执行真实GPU模型推理。
+本项目研究了首窗漏检、多窗口聚合、跨编码鲁棒性与模型错误互补。开发集改善不保证跨域保持，部分候选会增加真实语音误报或降低局部伪造检出。没有可公开核验的官方EER或比赛成绩；此前结构整理仅验证接口与逻辑；2026-11-04新增的真实CPU推理见上方示例，未进行GPU或比赛平台验收。
 
-原创部分采用[MIT](LICENSE)，第三方来源与适用边界见[NOTICE](NOTICE)。上游Spectra模型卡的Apache-2.0/MIT标注存在未解决的不一致；本仓库不分发上游模型实现、权重、数据、FFmpeg二进制或比赛原始资料，也不以项目MIT重新授权这些资源。
+原创部分采用[MIT](LICENSE)，第三方来源与适用边界见[NOTICE](NOTICE)。上游Spectra模型卡的Apache-2.0/MIT标注存在未解决的不一致；本仓库不分发上游模型实现、权重、FFmpeg二进制或比赛原始资料；仅随真实推理示例分发明确署名的三条FSDD公开录音，也不以项目MIT重新授权这些资源。

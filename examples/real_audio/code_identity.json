@@ -1,0 +1,34 @@
+[
+  {
+    "path": "predict.py",
+    "sha256": "0f35ade36a58f1e318fe0862b7cd03f09fbe2968158fea1d22f988c531148b9f"
+  },
+  {
+    "path": "audio_spectra/production.py",
+    "sha256": "d0ad2e31ca61fb5af7f5f72a88734df3f8fa5e4616377f1a544aa1ebd3047f6a"
+  },
+  {
+    "path": "audio_spectra/inference.py",
+    "sha256": "31b7f8113431d28d097360c983c9b27604859c961659984feb3c13f9e10321e8"
+  },
+  {
+    "path": "audio_spectra/multiwindow.py",
+    "sha256": "1d12305dc390c253dc5ba2e261be1f8eaa738e785f501e0b89eb8027880cfddb"
+  },
+  {
+    "path": "audio_spectra/output_adapter.py",
+    "sha256": "53de2f7d3b3f959e211bac30f8500e72812e05ba8443b37e2f6ffb2a6f12031f"
+  },
+  {
+    "path": "configs/v2.json",
+    "sha256": "2d79bf9db039d7dae5d6a6c7846dfe312c81c35efae0e63de92004ad6392a24c"
+  },
+  {
+    "path": "configs/resources/v2.json",
+    "sha256": "b38a021e9bc551327ad1f768c9c5d851309541fd79817bb35032cd10319de91e"
+  },
+  {
+    "path": "requirements.txt",
+    "sha256": "69db0830079f54d9e2ab467fe4bee29cdade0b0209bde4b4440b4026fa394c9d"
+  }
+]

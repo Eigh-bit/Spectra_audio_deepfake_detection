@@ -1,0 +1,10 @@
+{
+  "experiment_id": "public_audio_demo_20261104_01",
+  "authoritative_report": "reports/public_audio_demo_20261104_01.md (internal project workspace)",
+  "public_replica": "examples/real_audio/RESULTS.md",
+  "report_sha256": "24681d358124bbd9c02c2ed8992f6f1ac540af62793de17dfce0b6902d1a32f3",
+  "replica_policy": "Byte-identical publication snapshot; edit authority then regenerate replica",
+  "source_commit": "5d97d796788e735124c1aeb6fa98eab59dcf5799",
+  "original_status_retained": "internal run/raw-state/status.json",
+  "public_path_redaction": "execution.json input_directory/output_csv replaced by repository-relative paths"
+}
